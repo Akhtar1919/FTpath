@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTpath - Find your path around FTUI campus</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 9999px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 antialiased min-h-screen flex flex-col">
+
+    <!-- Header / Navbar (Biru Tua Makara + Aksen Kuning UI & Biru Terang) -->
+    <header class="bg-gradient-to-r from-[#002855] via-[#003b7a] to-[#00509d] border-b-4 border-amber-400 sticky top-0 z-30 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+            <!-- Bagian Kiri: Logo & Judul -->
+            <div class="flex items-center gap-3">
+                <div class="bg-white p-1.5 rounded-xl shadow-sm ring-2 ring-amber-400/80">
+                    <img src="images/FTUI.png" alt="Logo" class="w-8 h-8 object-contain">
+                </div>
+                
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="font-extrabold text-xl text-white tracking-tight leading-none">
+                            FT<span class="text-amber-300">Path</span>
+                        </h1>
+                        <span class="bg-blue-950/60 text-amber-200 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-amber-400/40 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Multi-Leg Transit
+                        </span>
+                    </div>
+                    <p class="text-xs text-sky-100 font-medium mt-0.5">Find your path around FTUI campus</p>
+                </div>
+            </div>
+
+            <!-- Bagian Kanan: Tombol Overview Map FT (Kuning UI) -->
+            <button id="openMapBtn" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-[#002244] border border-amber-500 text-xs sm:text-sm font-extrabold px-4 py-2 rounded-xl shadow-md transition flex items-center gap-2 shrink-0 cursor-pointer">
+                <i data-lucide="map" class="w-4 h-4 text-[#002244]"></i>
+                <span>Overview Map FT</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Sidebar / Search & Filter (4 Columns) -->
+        <section class="lg:col-span-4 space-y-4">
+            <div class="bg-white p-5 rounded-2xl border border-blue-200 border-t-4 border-t-blue-600 shadow-sm space-y-4">
+                <div class="flex items-center gap-2 text-[#002855] font-extrabold border-b border-blue-100 pb-3">
+                    <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <i data-lucide="map-pin-line" class="w-4 h-4"></i>
+                    </div>
+                    <h2>Cari Rute Perjalanan</h2>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-blue-900 mb-1">DARI (LOKASI ASAL)</label>
+                    <div class="relative">
+                        <select id="originSelect" class="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none transition">
+                            <option value="ALL">Semua Lokasi Asal</option>
+                            <option value="Halte Bus">Halte Bus</option>
+                            <option value="Gedung K">Gedung K</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-blue-600 absolute right-3 top-3 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-blue-900 mb-1">KE (TUJUAN)</label>
+                    <div class="relative">
+                        <select id="destinationSelect" class="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none transition">
+                            <option value="ALL">Semua Tujuan</option>
+                            <option value="Gedung K">Gedung K</option>
+                            <option value="Gedung S">Gedung S</option>
+                            <option value="Gedung ICELL">Gedung ICELL</option>
+                            <option value="Gedung DTM">Gedung DTM</option>
+                            <option value="Gedung IDE">Gedung IDE</option>
+                            <option value="Kantek">Kantek</option>
+                            <option value="Mustek">Mustek</option>
+                            <option value="Gedung DTSL">Gedung DTSL</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-blue-600 absolute right-3 top-3 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button id="resetFilterBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats/Info Box (Gradasi Biru Tua Makara ke Biru Cerah + Aksen Kuning) -->
+            <div class="bg-gradient-to-br from-[#002855] via-[#004080] to-blue-700 text-white p-5 rounded-2xl border border-blue-800 shadow-md space-y-2 relative overflow-hidden">
+                <div class="flex items-center gap-2 text-amber-300 font-extrabold text-sm">
+                    <i data-lucide="compass" class="w-4 h-4"></i>
+                    <h3>Find Your Path!!!</h3>
+                </div>
+                <p class="text-xs text-blue-50 leading-relaxed">
+                    Bingung memilih jalur yang tepat? FTpath dapat membantu anda menentukan jalur yang tepat di lingkungan kampus FTUI. Untuk rute transit, tersedia pilihan panduan <b>langsung dari titik transit</b> maupun <b>mulai dari Halte Bus</b>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Main Cards View (8 Columns) -->
+        <section class="lg:col-span-8 space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-extrabold text-[#002855] flex items-center gap-2">
+                    Rute Tersedia <span id="routeCountBadge" class="bg-blue-600 text-white text-xs px-2.5 py-0.5 rounded-full font-bold shadow-2xs">0</span>
+                </h2>
+                <span class="text-xs text-slate-600 font-medium">Klik rute untuk melihat video & foto alur</span>
+            </div>
+
+            <div id="routesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Data rute akan di-render di sini via JavaScript -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Overview Map FT -->
+    <div id="overviewMapModal" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-4xl rounded-2xl border-2 border-amber-400 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            <!-- Header Modal Peta -->
+            <div class="p-4 border-b-2 border-amber-400 flex items-center justify-between bg-gradient-to-r from-[#002855] to-[#004080] text-white">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-amber-400 text-[#002244] flex items-center justify-center shadow-xs">
+                        <i data-lucide="map" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-extrabold text-white leading-tight">Overview Map FTUI</h3>
+                        <p class="text-[11px] text-sky-100">Denah lokasi Fakultas Teknik UI</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button id="zoomOutMapBtn" title="Perkecil" class="bg-white/15 hover:bg-white/25 text-white p-1.5 rounded-lg border border-white/20 transition cursor-pointer">
+                        <i data-lucide="zoom-out" class="w-4 h-4"></i>
+                    </button>
+                    <button id="zoomResetMapBtn" title="Ukuran Normal" class="bg-white/15 hover:bg-white/25 text-white px-2.5 py-1 rounded-lg border border-white/20 text-xs font-bold transition cursor-pointer">
+                        100%
+                    </button>
+                    <button id="zoomInMapBtn" title="Perbesar" class="bg-white/15 hover:bg-white/25 text-white p-1.5 rounded-lg border border-white/20 transition cursor-pointer">
+                        <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                    </button>
+                    <button id="closeMapModalBtn" class="ml-2 text-[#002244] bg-amber-400 hover:bg-amber-300 p-1.5 rounded-xl transition cursor-pointer">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Area Gambar Peta (Scrollable & Zoomable) -->
+            <div class="p-4 overflow-auto custom-scrollbar flex-1 bg-slate-100 flex items-start justify-center">
+                <img id="overviewMapImg" src="images/mapft.jpg" alt="Peta Kampus FTUI" class="max-w-full h-auto rounded-xl shadow-md transition-transform duration-200 origin-top">
+            </div>
+
+            <!-- Footer Modal Peta -->
+            <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-600 px-5">
+                <span>Gunakan tombol zoom di atas atau cubit layar (pinch) di HP untuk memperjelas nomor gedung</span>
+                <button id="closeMapModalBottomBtn" class="bg-[#002855] text-white font-bold px-4 py-1.5 rounded-xl hover:bg-blue-700 transition cursor-pointer">Tutup Peta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail Rute (Interaktif Multi-Leg & 2 Opsi Keberangkatan) -->
+    <div id="routeModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-4xl rounded-2xl border border-blue-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-blue-100 flex items-start justify-between bg-gradient-to-r from-blue-50 to-white">
+                <div>
+                    <div class="flex items-center gap-2 mb-1 flex-wrap" id="modalBadgeContainer">
+                        <!-- Badges transit / direct di-render via JS -->
+                    </div>
+                    <h3 id="modalTitle" class="text-lg font-extrabold text-[#002855]">Judul Rute</h3>
+                    <p id="modalSubtitle" class="text-xs text-slate-600 flex items-center gap-2 mt-0.5 font-medium">
+                        <!-- Info waktu & aksesibilitas -->
+                    </p>
+                </div>
+                <button id="closeModalBtn" class="text-slate-600 hover:text-white hover:bg-blue-600 bg-white p-1.5 rounded-xl border border-slate-200 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Switcher Opsi Titik Mulai (Jika Rute Punya 2 Opsi: Dari Transit vs Dari Halte Bus) -->
+            <div id="startOptionContainer" class="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 hidden">
+                <span class="text-xs font-extrabold text-[#002855] flex items-center gap-1.5">
+                    <i data-lucide="git-branch" class="w-3.5 h-3.5 text-blue-600"></i> Pilih Titik Mulai:
+                </span>
+                <div id="startOptionButtons" class="flex gap-2 flex-wrap">
+                    <!-- Tombol opsi titik mulai di-render via JS -->
+                </div>
+            </div>
+
+            <!-- Tab Switcher Leg (Jika Multi-Leg Transit) -->
+            <div id="legTabContainer" class="bg-blue-50/80 px-4 py-2.5 border-b border-blue-100 flex gap-2 overflow-x-auto custom-scrollbar">
+                <!-- Tombol Tab Leg di-render via JS -->
+            </div>
+
+            <!-- Modal Content Area (Scrollable) -->
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+                
+                <!-- Notice Bar Transit -->
+                <div id="transitNoticeBar" class="bg-amber-50 border border-amber-300 text-amber-950 px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center gap-2.5 hidden">
+                    <i data-lucide="info" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+                    <span id="transitNoticeText">Rute ini menggunakan titik transit.</span>
+                </div>
+
+                <!-- Section 1: Video Walkthrough -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 id="currentLegTitle" class="text-sm font-extrabold text-[#002855] flex items-center gap-2">
+                            <i data-lucide="video" class="w-4 h-4 text-blue-600"></i> Video Panduan Rute
+                        </h4>
+                        <span id="legStepIndicator" class="text-xs font-bold bg-blue-600 text-white px-2.5 py-0.5 rounded-full">Leg 1 dari 2</span>
+                    </div>
+                    
+                    <div class="aspect-video bg-slate-950 rounded-xl overflow-hidden relative shadow-inner border border-slate-300">
+                        <iframe id="videoIframe" class="w-full h-full" src="" title="Video Rute Kampus" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                </div>
+
+                <!-- Section 2: Foto Alur Step-by-Step -->
+                <div class="pt-2">
+                    <h4 class="text-sm font-extrabold text-[#002855] mb-3 flex items-center gap-2">
+                        <i data-lucide="footprints" class="w-4 h-4 text-blue-600"></i> Panduan Alur Foto Step-by-Step
+                    </h4>
+                    <div id="stepCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Cards foto alur di-render via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-600 px-5">
+                <span id="legFooterInfo" class="font-medium">Pilih tahap di atas jika ingin melihat bagian berikutnya</span>
+                <button id="closeModalBottomBtn" class="bg-[#002855] text-white font-bold px-4 py-1.5 rounded-xl hover:bg-blue-700 transition cursor-pointer">Tutup Navigasi</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript Data & UI Logic -->
+    <script>
+        function buildSteps(folderName, prefix, count) {
+            return Array.from({ length: count }, (_, i) => {
+                const n = i + 1;
+                return {
+                    step: n,
+                    title: `Step ${n}`,
+                    desc: `Step ${n}`,
+                    action: `Step ${n}`,
+                    actionColor: "bg-blue-600 text-white",
+                    img: `${folderName}/${prefix}${n}.jpeg`
+                };
+            });
+        }
+
+        // Helper Leg Reusable
+        const legHalteToGedungK = {
+            legTitle: "Tahap 1: Halte Bus ➔ Gedung K",
+            fromName: "Halte Bus",
+            toName: "Gedung K",
+            videoEmbedUrl: "https://youtube.com/embed/KblVgmGNnVA?si=ma4RTlX_AC1GjViL",
+            steps: buildSteps("Gedung K", "K", 7)
+        };
+
+        const legHalteToICELL = {
+            legTitle: "Tahap 1: Halte Bus ➔ Gedung ICELL",
+            fromName: "Halte Bus",
+            toName: "Gedung ICELL",
+            videoEmbedUrl: "https://youtube.com/embed/IIzw_29sDHU?si=PBMX7Ts-h_5lb_Ej",
+            steps: buildSteps("Gedung ICELL", "IC", 7)
+        };
+
+        const stepsKantek = buildSteps("Kantek", "Kan", 7);
+        const stepsGedungDTM = buildSteps("Gedung DTM", "M", 6);
+        const stepsGedungDTSL = buildSteps("Gedung DTSL", "SL", 7);
+        const stepsGedungIDE = buildSteps("Gedung IDE", "ID", 5);
+
+        // Data Rute Kampus
+        const routesData = [
+            // 1. DIRECT: Halte Bus -> Gedung K
+            {
+                id: "rute-halte-gedungk",
+                title: "Halte Bus ke Gedung K (Direct)",
+                from: "Halte Bus",
+                to: "Gedung K",
+                duration: "3 Menit",
+                isTransit: false,
+                transitPoint: null,
+                options: [
+                    {
+                        optionId: "from-halte",
+                        label: "Dari Halte Bus (Direct)",
+                        fromFilter: "Halte Bus",
+                        duration: "3 Menit",
+                        isTransit: false,
+                        legs: [
+                            {
+                                legTitle: "Rute Langsung: Halte Bus ➔ Gedung K",
+                                fromName: "Halte Bus",
+                                toName: "Gedung K",
+                                videoEmbedUrl: "https://youtube.com/embed/KblVgmGNnVA?si=ma4RTlX_AC1GjViL",
+                                steps: buildSteps("Gedung K", "K", 8)
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            // 2. DIRECT: Halte Bus -> Gedung S
+            {
+                id: "rute-halte-gedungs",
+                title: "Halte Bus ke Gedung S (Direct)",
+                from: "Halte Bus",
+                to: "Gedung S",
+                duration: "4 Menit",
+                isTransit: false,
+                transitPoint: null,
+                options: [
+                    {
+                        optionId: "from-halte",
+                        label: "Dari Halte Bus (Direct)",
+                        fromFilter: "Halte Bus",
+                        duration: "4 Menit",
+                        isTransit: false,
+                        legs: [
+                            {
+                                legTitle: "Rute Langsung: Halte Bus ➔ Gedung S",
+                                fromName: "Halte Bus",
+                                toName: "Gedung S",
+                                videoEmbedUrl: "https://youtube.com/embed/jv4N04XJR2U?si=c317G_uP92Pi8j1Q",
+                                steps: buildSteps("Gedung S", "S", 7)
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            // 3. DIRECT: Halte Bus -> Gedung ICELL
+            {
+                id: "rute-halte-icell",
+                title: "Halte Bus ke Gedung ICELL (Direct)",
+                from: "Halte Bus",
+                to: "Gedung ICELL",
+                duration: "3 Menit",
+                isTransit: false,
+                transitPoint: null,
+                options: [
+                    {
+                        optionId: "from-halte",
+                        label: "Dari Halte Bus (Direct)",
+                        fromFilter: "Halte Bus",
+                        duration: "3 Menit",
+                        isTransit: false,
+                        legs: [
+                            {
+                                legTitle: "Rute Langsung: Halte Bus ➔ Gedung ICELL",
+                                fromName: "Halte Bus",
+                                toName: "Gedung ICELL",
+                                videoEmbedUrl: "https://youtube.com/embed/IIzw_29sDHU?si=PBMX7Ts-h_5lb_Ej",
+                                steps: buildSteps("Gedung ICELL", "IC", 7)
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            // 4. TRANSIT VIA GEDUNG K (2 OPSI): Menuju Kantek
+            {
+                id: "rute-kantek",
+                title: "Menuju Kantek (Kantin Teknik)",
+                from: "Gedung K / Halte Bus",
+                to: "Kantek",
+                duration: "5 - 18 Menit",
+                isTransit: true,
+                transitPoint: "Gedung K",
+                options: [
+                    {
+                        optionId: "from-gedungk",
+                        label: "Langsung dari Gedung K",
+                        fromFilter: "Gedung K",
+                        duration: "5 Menit",
+                        isTransit: false,
+                        legs: [
+                            {
+                                legTitle: "Langsung: Gedung K ➔ Kantek",
+                                fromName: "Gedung K",
+                                toName: "Kantek",
+                                videoEmbedUrl: "https://youtube.com/embed/Sgxbx65IDeM?si=qqhRIf7X4MkRlYvg",
+                                steps: stepsKantek
+                            }
+                        ]
+                    },
+                    {
+                        optionId: "from-halte",
+                        label: "Panduan menuju Gedung K (dari Halte)",
+                        fromFilter: "Halte Bus",
+                        duration: "18 Menit",
+                        isTransit: true,
+                        legs: [
+                            legHalteToGedungK,
+                            {
+                                legTitle: "Tahap 2: Gedung K ➔ Kantek",
+                                fromName: "Gedung K",
+                                toName: "Kantek",
+                                videoEmbedUrl: "https://youtube.com/embed/Sgxbx65IDeM?si=qqhRIf7X4MkRlYvg",
+                                steps: stepsKantek
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            // 5. TRANSIT VIA GEDUNG K (2 OPSI): Menuju Gedung DTM
+            {
+                id: "rute-dtm",
+                title: "Menuju Gedung DTM (Departemen Teknik Mesin)",
+                from: "Gedung K / Halte Bus",
+                to: "Gedung DTM",
+                duration: "4 - 8 Menit",
+                isTransit: true,
+                transitPoint: "Gedung K",
+                options: [
+                    {
+                        optionId: "from-gedungk",
+                        label: "Langsung dari Gedung K",
+                        fromFilter: "Gedung K",
+                        duration: "4 Menit",
+                        isTransit: false,
+                        legs: [
+                            {
+                                legTitle: "Langsung: Gedung K ➔ Gedung DTM",
+                                fromName: "Gedung K",
+                                toName: "Gedung DTM",
+                                videoEmbedUrl: "https://youtube.com/embed/pImbjGftkeo?si=gWfljxs3KDiqll4H",
+                                steps: stepsGedungDTM
+                            }
+                        ]
+                    },
+                    {
+                        optionId: "from-halte",
+                        label: "Panduan menuju Gedung K (dari Halte)",
+                        fromFilter: "Halte Bus",
+                        duration: "8 Menit",
+                        isTransit: true,
+                        legs: [
+                            legHalteToGedungK,
+                            {
+                                legTitle: "Tahap 2: Gedung K ➔ Gedung DTM",
+                                fromName: "Gedung K",
+                                toName: "Gedung DTM",
+                                videoEmbedUrl: "https://youtube.com/embed/pImbjGftkeo?si=gWfljxs3KDiqll4H",
+                                steps: stepsGedungDTM
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            // 6. TRANSIT VIA GEDUNG K (2 OPSI): Menuju Mustek
+            {
+                id: "rute-mustek",
+                title: "Menuju Mustek (Musholla Teknik)",
+                from: "Gedung K / Halte Bus",
+                to: "Mustek",
+                duration: "4 - 8 Menit",
+                isTransit: true,
+                transitPoint: "Gedung K",
+                options: [
+                    {
+                        optionId: "from-gedungk",
+                        label: "Langsung dari Gedung K",
+                        fromFilter: "Gedung K",
+                        duration: "4 Menit",
+                        isTransit: false,
+                        legs: [
+                            {
+                                legTitle: "Langsung: Gedung K ➔ Mustek",
+                                fromName: "Gedung K",
+                                toName: "Mustek",
+                                videoEmbedUrl: "", // TODO: Isi URL embed YouTube Gedung K -> Mustek
+                                steps: [
+                                    { step: 1, title: "Step 1", desc: "Step 1", action: "Step 1", actionColor: "bg-blue-600 text-white", img: "images/placeholder.jpeg" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        optionId: "from-halte",
+                        label: "Panduan menuju Gedung K (dari Halte)",
+                        fromFilter: "Halte Bus",
+                        duration: "8 Menit",
+                        isTransit: true,
+                        legs: [
+                            legHalteToGedungK,
+                            {
+                                legTitle: "Tahap 2: Gedung K ➔ Mustek",
+                                fromName: "Gedung K",
+                                toName: "Mustek",
+                                videoEmbedUrl: "", // TODO: Isi URL embed YouTube Gedung K -> Mustek
+                                steps: [
+                                    { step: 1, title: "Step 1", desc: "Step 1", action: "Step 1", actionColor: "bg-blue-600 text-white", img: "images/placeholder.jpeg" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            // 7. TRANSIT VIA GEDUNG K (2 OPSI): Menuju Gedung DTSL
+            {
+                id: "rute-dtsl",
+                title: "Menuju Gedung DTSL (Departemen Teknik Sipil & Lingkungan)",
+                from: "Gedung K / Halte Bus",
+                to: "Gedung DTSL",
+                duration: "5 - 9 Menit",
+                isTransit: true,
+                transitPoint: "Gedung K",
+                options: [
+                    {
+                        optionId: "from-gedungk",
+                        label: "Langsung dari Gedung K",
+                        fromFilter: "Gedung K",
+                        duration: "5 Menit",
+                        isTransit: false,
+                        legs: [
+                            {
+                                legTitle: "Langsung: Gedung K ➔ Gedung DTSL",
+                                fromName: "Gedung K",
+                                toName: "Gedung DTSL",
+                                videoEmbedUrl: "", // TODO: Isi URL embed YouTube Gedung K -> Gedung DTSL
+                                steps: stepsGedungDTSL
+                            }
+                        ]
+                    },
+                    {
+                        optionId: "from-halte",
+                        label: "Panduan menuju Gedung K (dari Halte)",
+                        fromFilter: "Halte Bus",
+                        duration: "9 Menit",
+                        isTransit: true,
+                        legs: [
+                            legHalteToGedungK,
+                            {
+                                legTitle: "Tahap 2: Gedung K ➔ Gedung DTSL",
+                                fromName: "Gedung K",
+                                toName: "Gedung DTSL",
+                                videoEmbedUrl: "", // TODO: Isi URL embed YouTube Gedung K -> Gedung DTSL
+                                steps: stepsGedungDTSL
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            // 8. TRANSIT VIA GEDUNG ICELL (2 OPSI): Menuju Gedung IDE
+            {
+                id: "rute-ide",
+                title: "Menuju Gedung IDE",
+                from: "Gedung ICELL / Halte Bus",
+                to: "Gedung IDE",
+                duration: "3 - 6 Menit",
+                isTransit: true,
+                transitPoint: "Gedung ICELL",
+                options: [
+                    {
+                        optionId: "from-icell",
+                        label: "Langsung dari Gedung ICELL",
+                        fromFilter: "Gedung ICELL",
+                        duration: "3 Menit",
+                        isTransit: false,
+                        legs: [
+                            {
+                                legTitle: "Langsung: Gedung ICELL ➔ Gedung IDE",
+                                fromName: "Gedung ICELL",
+                                toName: "Gedung IDE",
+                                videoEmbedUrl: "https://youtube.com/embed/VlXHrxl5cpg?si=yTC8ML2_LY7DIF98",
+                                steps: stepsGedungIDE
+                            }
+                        ]
+                    },
+                    {
+                        optionId: "from-halte",
+                        label: "Panduan menuju Gedung ICELL (dari Halte)",
+                        fromFilter: "Halte Bus",
+                        duration: "6 Menit",
+                        isTransit: true,
+                        legs: [
+                            legHalteToICELL,
+                            {
+                                legTitle: "Tahap 2: Gedung ICELL ➔ Gedung IDE",
+                                fromName: "Gedung ICELL",
+                                toName: "Gedung IDE",
+                                videoEmbedUrl: "https://youtube.com/embed/VlXHrxl5cpg?si=yTC8ML2_LY7DIF98",
+                                steps: stepsGedungIDE
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // Global State Active Modal
+        let activeRoute = null;
+        let activeOptionIndex = 0;
+        let activeLegIndex = 0;
+
+        // Element Selectors
+        const routesListEl = document.getElementById('routesList');
+        const originSelect = document.getElementById('originSelect');
+        const destinationSelect = document.getElementById('destinationSelect');
+        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        const routeCountBadge = document.getElementById('routeCountBadge');
+
+        // Overview Map Modal Elements
+        const openMapBtn = document.getElementById('openMapBtn');
+        const overviewMapModal = document.getElementById('overviewMapModal');
+        const closeMapModalBtn = document.getElementById('closeMapModalBtn');
+        const closeMapModalBottomBtn = document.getElementById('closeMapModalBottomBtn');
+        const overviewMapImg = document.getElementById('overviewMapImg');
+        const zoomInMapBtn = document.getElementById('zoomInMapBtn');
+        const zoomOutMapBtn = document.getElementById('zoomOutMapBtn');
+        const zoomResetMapBtn = document.getElementById('zoomResetMapBtn');
+        let mapZoomLevel = 1;
+
+        openMapBtn.addEventListener('click', () => {
+            mapZoomLevel = 1;
+            overviewMapImg.style.transform = `scale(${mapZoomLevel})`;
+            overviewMapModal.classList.remove('hidden');
+        });
+
+        function closeOverviewMap() {
+            overviewMapModal.classList.add('hidden');
+        }
+
+        closeMapModalBtn.addEventListener('click', closeOverviewMap);
+        closeMapModalBottomBtn.addEventListener('click', closeOverviewMap);
+        overviewMapModal.addEventListener('click', (e) => {
+            if (e.target === overviewMapModal) closeOverviewMap();
+        });
+
+        zoomInMapBtn.addEventListener('click', () => {
+            if (mapZoomLevel < 2.2) {
+                mapZoomLevel = +(mapZoomLevel + 0.25).toFixed(2);
+                overviewMapImg.style.transform = `scale(${mapZoomLevel})`;
+            }
+        });
+
+        zoomOutMapBtn.addEventListener('click', () => {
+            if (mapZoomLevel > 0.75) {
+                mapZoomLevel = +(mapZoomLevel - 0.25).toFixed(2);
+                overviewMapImg.style.transform = `scale(${mapZoomLevel})`;
+            }
+        });
+
+        zoomResetMapBtn.addEventListener('click', () => {
+            mapZoomLevel = 1;
+            overviewMapImg.style.transform = `scale(1)`;
+        });
+
+        // Route Modal Elements
+        const routeModal = document.getElementById('routeModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const closeModalBottomBtn = document.getElementById('closeModalBottomBtn');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalSubtitle = document.getElementById('modalSubtitle');
+        const modalBadgeContainer = document.getElementById('modalBadgeContainer');
+        const startOptionContainer = document.getElementById('startOptionContainer');
+        const startOptionButtons = document.getElementById('startOptionButtons');
+        const legTabContainer = document.getElementById('legTabContainer');
+        const transitNoticeBar = document.getElementById('transitNoticeBar');
+        const transitNoticeText = document.getElementById('transitNoticeText');
+        const videoIframe = document.getElementById('videoIframe');
+        const stepCardsContainer = document.getElementById('stepCardsContainer');
+        const currentLegTitle = document.getElementById('currentLegTitle');
+        const legStepIndicator = document.getElementById('legStepIndicator');
+        const legFooterInfo = document.getElementById('legFooterInfo');
+
+        // Render Catalog Cards
+        function renderRoutes(filteredRoutes) {
+            routesListEl.innerHTML = '';
+            routeCountBadge.innerText = filteredRoutes.length;
+
+            if(filteredRoutes.length === 0) {
+                routesListEl.innerHTML = `
+                    <div class="col-span-full bg-white p-8 rounded-2xl border border-blue-200 text-center space-y-2">
+                        <i data-lucide="map-pin-off" class="w-10 h-10 text-blue-300 mx-auto"></i>
+                        <h3 class="font-bold text-slate-900">Rute Tidak Ditemukan</h3>
+                        <p class="text-xs text-slate-500">Coba ubah kombinasi filter Asal dan Tujuan Anda.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            filteredRoutes.forEach(route => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-blue-200/80 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-900/5 transition cursor-pointer flex flex-col justify-between space-y-4 group";
+                
+                const hasMultipleOptions = route.options.length > 1;
+                const transitBadge = route.isTransit 
+                    ? `<span class="bg-amber-300 text-[#002244] border border-amber-400 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1"><i data-lucide="compass" class="w-3 h-3"></i> Transit: ${route.transitPoint}</span>`
+                    : `<span class="bg-blue-600 text-white border border-blue-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Langsung</span>`;
+
+                const optionInfoText = hasMultipleOptions
+                    ? `2 Opsi Mulai (${route.transitPoint} / Halte)`
+                    : `1 Tahap Video`;
+
+                card.innerHTML = `
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            ${transitBadge}
+                            <span class="text-xs font-bold text-slate-600 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full">
+                                <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-600"></i> ${route.duration}
+                            </span>
+                        </div>
+                        <h3 class="font-extrabold text-[#002855] group-hover:text-blue-600 transition text-base">${route.title}</h3>
+                        <div class="text-xs text-slate-600 space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="circle-dot" class="w-3.5 h-3.5 text-sky-500"></i>
+                                <span>Dari: <b class="text-slate-900">${route.from}</b></span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-blue-600"></i>
+                                <span>Ke: <b class="text-slate-900">${route.to}</b></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-blue-600 font-extrabold group-hover:underline flex items-center gap-1">
+                            Buka Navigasi Media <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        </span>
+                        <span class="text-slate-500 font-semibold text-[11px]">${optionInfoText}</span>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => openModal(route));
+                routesListEl.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Open Modal & Auto-select Option based on Current Filter
+        function openModal(route) {
+            activeRoute = route;
+            activeLegIndex = 0;
+
+            const currentOriginFilter = originSelect.value;
+            const matchedOptionIdx = route.options.findIndex(opt => opt.fromFilter === currentOriginFilter);
+            activeOptionIndex = matchedOptionIdx !== -1 ? matchedOptionIdx : 0;
+
+            modalTitle.innerText = route.title;
+            renderStartOptions();
+            applyActiveOption();
+
+            routeModal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // Render Toggle 2 Opsi (Langsung dari Transit vs Mulai dari Halte Bus)
+        function renderStartOptions() {
+            startOptionButtons.innerHTML = '';
+
+            if (activeRoute.options.length <= 1) {
+                startOptionContainer.classList.add('hidden');
+                return;
+            }
+
+            startOptionContainer.classList.remove('hidden');
+
+            activeRoute.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                const isSelected = idx === activeOptionIndex;
+
+                btn.className = `px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer ${
+                    isSelected
+                        ? 'bg-[#002855] text-amber-300 shadow-xs ring-2 ring-amber-400/60'
+                        : 'bg-white text-slate-700 border border-slate-300 hover:bg-blue-50'
+                }`;
+
+                btn.innerHTML = `
+                    <i data-lucide="${opt.isTransit ? 'route' : 'navigation'}" class="w-3.5 h-3.5"></i>
+                    <span>${opt.label}</span>
+                `;
+
+                btn.addEventListener('click', () => {
+                    activeOptionIndex = idx;
+                    activeLegIndex = 0;
+                    renderStartOptions();
+                    applyActiveOption();
+                });
+
+                startOptionButtons.appendChild(btn);
+            });
+        }
+
+        // Terapkan opsi keberangkatan yang aktif ke Header, Notice, dan Tab Leg
+        function applyActiveOption() {
+            const currentOpt = activeRoute.options[activeOptionIndex];
+
+            modalSubtitle.innerHTML = `
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-600"></i> Estimasi: ${currentOpt.duration}
+                <span class="mx-1">•</span>
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-600"></i> ${currentOpt.legs.length} Tahap Perjalanan
+            `;
+
+            modalBadgeContainer.innerHTML = currentOpt.isTransit
+                ? `<span class="bg-amber-300 text-[#002244] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-400 flex items-center gap-1"><i data-lucide="compass" class="w-3 h-3"></i> Transit via ${activeRoute.transitPoint}</span>`
+                : `<span class="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-blue-700 flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Rute Langsung</span>`;
+
+            if (currentOpt.isTransit) {
+                transitNoticeBar.classList.remove('hidden');
+                transitNoticeText.innerText = `Mode Transit: Panduan dimulai dari Halte Bus dan transit di ${activeRoute.transitPoint} sebelum menuju ${activeRoute.to}.`;
+            } else if (activeRoute.options.length > 1) {
+                transitNoticeBar.classList.remove('hidden');
+                transitNoticeText.innerText = `Mode Langsung: Anda sudah berada di titik transit (${activeRoute.transitPoint}). Ingin panduan dari Halte Bus? Klik opsi di atas.`;
+            } else {
+                transitNoticeBar.classList.add('hidden');
+            }
+
+            renderLegTabs();
+            loadLegContent(0);
+        }
+
+        // Render Tabs untuk Leg
+        function renderLegTabs() {
+            const currentOpt = activeRoute.options[activeOptionIndex];
+            legTabContainer.innerHTML = '';
+            
+            if (currentOpt.legs.length <= 1) {
+                legTabContainer.classList.add('hidden');
+                return;
+            }
+
+            legTabContainer.classList.remove('hidden');
+
+            currentOpt.legs.forEach((leg, index) => {
+                const tabBtn = document.createElement('button');
+                const isActive = index === activeLegIndex;
+
+                tabBtn.className = `px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer ${
+                    isActive 
+                        ? 'bg-blue-600 text-white shadow-xs' 
+                        : 'bg-white text-slate-800 border border-blue-200 hover:bg-blue-100/50'
+                }`;
+
+                tabBtn.innerHTML = `
+                    <span class="w-4 h-4 rounded-full ${isActive ? 'bg-amber-400 text-[#002244]' : 'bg-blue-100 text-blue-800'} text-[10px] flex items-center justify-center font-extrabold">${index + 1}</span>
+                    <span>${leg.fromName} ➔ ${leg.toName}</span>
+                `;
+
+                tabBtn.addEventListener('click', () => {
+                    activeLegIndex = index;
+                    renderLegTabs();
+                    loadLegContent(index);
+                });
+
+                legTabContainer.appendChild(tabBtn);
+            });
+        }
+
+        // Load Content per Leg
+        function loadLegContent(legIndex) {
+            const currentOpt = activeRoute.options[activeOptionIndex];
+            const leg = currentOpt.legs[legIndex];
+
+            currentLegTitle.innerText = leg.legTitle;
+            legStepIndicator.innerText = `Tahap ${legIndex + 1} dari ${currentOpt.legs.length}`;
+            videoIframe.src = leg.videoEmbedUrl || "";
+
+            stepCardsContainer.innerHTML = '';
+            leg.steps.forEach(step => {
+                const stepCard = document.createElement('div');
+                stepCard.className = "bg-white rounded-xl border border-blue-200/80 overflow-hidden space-y-2 flex flex-col justify-between shadow-2xs";
+                
+                stepCard.innerHTML = `
+                    <div>
+                        <div class="h-36 bg-slate-200 relative overflow-hidden border-b border-slate-200">
+                            <img src="${step.img}" alt="${step.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/e2e8f0/475569?text=Foto+Belum+Diisi'">
+                            <span class="absolute top-2 left-2 bg-[#002855]/90 backdrop-blur-xs text-amber-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-400/40">
+                                Langkah ${step.step}
+                            </span>
+                            <span class="absolute bottom-2 right-2 ${step.actionColor} text-[10px] font-bold px-2.5 py-0.5 rounded-md shadow-xs">
+                                ${step.action}
+                            </span>
+                        </div>
+                        <div class="p-3">
+                            <h5 class="font-extrabold text-[#002855] text-xs">${step.title}</h5>
+                            <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">${step.desc}</p>
+                        </div>
+                    </div>
+                `;
+                stepCardsContainer.appendChild(stepCard);
+            });
+
+            legFooterInfo.innerText = currentOpt.legs.length > 1 
+                ? `Menampilkan Tahap ${legIndex + 1} (${leg.fromName} ke ${leg.toName})`
+                : `Menampilkan Rute Langsung (${leg.fromName} ke ${leg.toName})`;
+
+            lucide.createIcons();
+        }
+
+        // Close Modal Handlers
+        function closeModal() {
+            routeModal.classList.add('hidden');
+            videoIframe.src = "";
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        closeModalBottomBtn.addEventListener('click', closeModal);
+
+        // Filter Logic
+        function filterRoutes() {
+            const originVal = originSelect.value;
+            const destVal = destinationSelect.value;
+
+            const filtered = routesData.filter(route => {
+                const matchOrigin = originVal === 'ALL' || route.options.some(opt => opt.fromFilter === originVal);
+                const matchDest = destVal === 'ALL' || route.to === destVal;
+                return matchOrigin && matchDest;
+            });
+
+            renderRoutes(filtered);
+        }
+
+        originSelect.addEventListener('change', filterRoutes);
+        destinationSelect.addEventListener('change', filterRoutes);
+
+        resetFilterBtn.addEventListener('click', () => {
+            originSelect.value = 'ALL';
+            destinationSelect.value = 'ALL';
+            renderRoutes(routesData);
+        });
+
+        // Initial Render
+        renderRoutes(routesData);
+    </script>
+</body>
+</html>
